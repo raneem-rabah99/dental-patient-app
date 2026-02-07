@@ -21,6 +21,16 @@ in a simple and organized way.
 
 ---
 
+## 💬 Medical Chatbot
+- Integrated AI chatbot for patients
+- Answers medical and dental-related questions
+- Helps patients understand:
+  - Dental conditions
+  - AI diagnosis results
+- Available directly inside the app
+
+---
+
 ## 👨‍⚕️ Doctor Discovery
 
 ### 🔎 Find a Doctor
@@ -50,6 +60,14 @@ Appointments are displayed in a **clean and organized layout**.
 
 ---
 
+## 🌐 Language & Theme Support
+
+- Supports **English and Arabic**
+- Includes **Dark Mode** and **Light Mode**
+- Clean and user-friendly UI for all users
+
+---
+
 ## 🛠 Tech Stack
 - Flutter
 - Dart
@@ -65,6 +83,11 @@ Appointments are displayed in a **clean and organized layout**.
 - No sensitive data is shared publicly
 - AI output does not replace professional diagnosis
 
+---
+
+## 🎥 Demo
+- Screenshots: `demo/images/`
+  
 ---
 
 ## 🎓 Project Type

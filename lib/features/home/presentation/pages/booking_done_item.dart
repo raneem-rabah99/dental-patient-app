@@ -1,46 +1,38 @@
-import 'package:dentaltreatment/core/classes/icons_classes.dart';
+import 'dart:io';
 import 'package:dentaltreatment/core/theme/app_assets.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
-import 'package:dentaltreatment/features/home/data/models/booking_card_model.dart';
-import 'package:dentaltreatment/features/home/presentation/managers/booking%20_card_cubit.dart';
+import 'package:dentaltreatment/features/home/data/models/booking_status_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class BookingdoneItem extends StatefulWidget {
-  final BookingCardModel bookingDone;
+class BookingDoneItem extends StatefulWidget {
+  final BookingStatusModel booking;
 
-  const BookingdoneItem({Key? key, required this.bookingDone})
-    : super(key: key);
+  const BookingDoneItem({Key? key, required this.booking}) : super(key: key);
 
   @override
-  _BookingdoneItemState createState() => _BookingdoneItemState();
+  _BookingDoneItemState createState() => _BookingDoneItemState();
 }
 
-class _BookingdoneItemState extends State<BookingdoneItem> {
-  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+class _BookingDoneItemState extends State<BookingDoneItem> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   String? imagePath;
 
   @override
   void initState() {
     super.initState();
-    _loadUserImage();
+    _loadImage();
   }
 
-  Future<void> _loadUserImage() async {
-    String? storedImagePath = await _secureStorage.read(key: 'image');
-    setState(() {
-      imagePath = storedImagePath;
-    });
-    print("Retrieved Today's Booking Image Path: $imagePath");
+  Future<void> _loadImage() async {
+    final path = await _storage.read(key: 'image');
+    setState(() => imagePath = path);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 600,
-      margin: const EdgeInsets.only(right: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -54,6 +46,7 @@ class _BookingdoneItemState extends State<BookingdoneItem> {
       ),
       child: Stack(
         children: [
+          // Left color strip
           Positioned(
             left: 0,
             top: 0,
@@ -69,105 +62,108 @@ class _BookingdoneItemState extends State<BookingdoneItem> {
               ),
             ),
           ),
+
           Padding(
-            padding: const EdgeInsets.only(
-              left: 22,
-              right: 10,
-              bottom: 8,
-              top: 10,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Profile row
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     CircleAvatar(
                       radius: 24,
                       backgroundImage:
-                          imagePath != null && File(imagePath!).existsSync()
+                          (imagePath != null && File(imagePath!).existsSync())
                               ? FileImage(File(imagePath!))
                               : AssetImage(AppAssets.user) as ImageProvider,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 10),
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.bookingDone.userName,
+                          widget.booking.doctorName,
                           style: const TextStyle(
-                            fontFamily: 'Serif',
-                            fontWeight: FontWeight.bold,
                             fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Serif',
                           ),
                         ),
                         Row(
                           children: [
-                            Iconlocation.location,
-                            const SizedBox(width: 5),
-                            Text(
-                              widget.bookingDone.location,
-                              style: const TextStyle(
-                                fontFamily: 'Serif',
-                                fontSize: 12,
-                                color: Colors.black,
-                                decoration: TextDecoration.underline,
-                                decorationThickness: 2.0,
-                                decorationStyle: TextDecorationStyle.solid,
+                            Icon(Icons.location_on, size: 14),
+                            SizedBox(width: 5),
+                            SizedBox(
+                              width: 180,
+                              child: Text(
+                                widget.booking.doctorAddress,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontFamily: 'Serif',
+                                  decoration: TextDecoration.underline,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ],
                     ),
+
                     Spacer(),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Iconecelender.celender,
-                    const SizedBox(width: 5),
-                    Text(
-                      "From: ${widget.bookingDone.date}",
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontSize: 10,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Iconclock.clock,
-                    const SizedBox(width: 5),
-                    Text(
-                      "At: ${widget.bookingDone.time}",
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontSize: 10,
-                        color: Colors.black,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                  ],
-                ),
+
                 const SizedBox(height: 10),
 
+                // Date + time
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 14),
+                    SizedBox(width: 5),
+                    Text(
+                      "From: ${widget.booking.date}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Serif',
+                        color: Colors.black,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Icon(Icons.access_time, size: 14),
+                    SizedBox(width: 5),
+                    Text(
+                      "At: ${widget.booking.time}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontFamily: 'Serif',
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Doctor note section (dummy UI)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 20.0),
-                      child: Text("Note From Doctor"),
-                    ),
-                    const SizedBox(width: 6),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 20),
-                      child: Container(
-                        height: 50,
-                        width: 50,
-                        child: Image.asset(AppAssets.doctor),
+                    Text(
+                      "Note From Doctor",
+                      style: TextStyle(
+                        fontFamily: 'Serif',
+                        fontSize: 14,
+                        color: Colors.black,
                       ),
+                    ),
+                    Container(
+                      height: 50,
+                      width: 50,
+                      child: Image.asset(AppAssets.doctor),
                     ),
                   ],
                 ),

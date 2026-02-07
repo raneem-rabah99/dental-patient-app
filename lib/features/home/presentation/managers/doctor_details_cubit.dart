@@ -9,82 +9,120 @@ class DoctorDetailsCubit extends Cubit<DoctorDetailsState> {
 
   DoctorDetailsCubit(this.doctor) : super(DoctorDetailsState.initial());
 
-  // ----------------------------- SELECT DATE -----------------------------
+  // ================= BACKEND TIME RANGE =================
+  // Example: "09:00:00 - 17:00:00"
+  late final String rawRange = (doctor["time"] ?? "00:00:00 - 23:59:59")
+      .replaceAll(" ", "");
+
+  // ================= RANGE START =================
+  TimeOfDay get rangeStart {
+    final start = rawRange.split("-").first;
+    return _parseTime(start);
+  }
+
+  // ================= RANGE END =================
+  TimeOfDay get rangeEnd {
+    final end = rawRange.split("-").last;
+    return _parseTime(end);
+  }
+
+  // ================= SAFE TIME PARSER =================
+  TimeOfDay _parseTime(String time) {
+    final parts = time.trim().split(":");
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  // ================= RANGE VALIDATION =================
+  bool _isTimeWithinRange(TimeOfDay t) {
+    final selected = t.hour * 60 + t.minute;
+    final start = rangeStart.hour * 60 + rangeStart.minute;
+    final end = rangeEnd.hour * 60 + rangeEnd.minute;
+
+    // same-day range (09:00–17:00)
+    if (start <= end) {
+      return selected >= start && selected <= end;
+    }
+
+    // overnight range (22:00–04:00)
+    return selected >= start || selected <= end;
+  }
+
+  // ================= SELECT DATE =================
   void selectDate(DateTime date) {
-    if (isClosed) return;
     emit(
       state.copyWith(
         selectedDate: date,
+
+        // 🔥 GUARANTEE TIME
+        selectedTime: state.selectedTime ?? rangeStart,
+
         errorMessage: null,
         successMessage: null,
       ),
     );
   }
 
-  // ----------------------------- SELECT TIME -----------------------------
+  // ================= SELECT TIME =================
   void selectTime(TimeOfDay time) {
-    if (isClosed) return;
+    // 🔥 SAFETY: fallback to rangeStart
+    final safeTime = _isTimeWithinRange(time) ? time : rangeStart;
+
     emit(
       state.copyWith(
-        selectedTime: time,
+        selectedTime: safeTime,
         errorMessage: null,
         successMessage: null,
       ),
     );
   }
 
-  // ----------------------------- FORMAT TIME -----------------------------
-  String formatTime24(TimeOfDay time) {
-    final h = time.hour.toString().padLeft(2, '0');
-    final m = time.minute.toString().padLeft(2, '0');
+  // ================= FORMAT TIME (24H) =================
+  String formatTime24(TimeOfDay t) {
+    final h = t.hour.toString().padLeft(2, '0');
+    final m = t.minute.toString().padLeft(2, '0');
     return "$h:$m";
   }
 
-  // ----------------------------- BOOK APPOINTMENT -----------------------------
+  // ================= BOOK APPOINTMENT =================
   Future<void> bookAppointment() async {
-    // -------- Validate Doctor ID --------
-    if (doctor["id"] == null || doctor["id"] is! int) {
-      if (isClosed) return;
+    if (doctor["id"] == null) {
       emit(state.copyWith(errorMessage: "Invalid doctor ID"));
       return;
     }
 
-    // -------- Validate Date --------
     if (state.selectedDate == null) {
-      if (isClosed) return;
       emit(state.copyWith(errorMessage: "Please choose a date"));
       return;
     }
 
-    // -------- Validate Time --------
-    if (state.selectedTime == null) {
-      if (isClosed) return;
-      emit(state.copyWith(errorMessage: "Please choose a time"));
+    // 🔥 FINAL GUARANTEE — NEVER NULL
+    final TimeOfDay selectedTime = state.selectedTime ?? rangeStart;
+
+    // Final validation
+    if (!_isTimeWithinRange(selectedTime)) {
+      emit(
+        state.copyWith(
+          errorMessage: "This time is not available. Allowed time: $rawRange",
+        ),
+      );
       return;
     }
 
-    if (isClosed) return;
-
-    emit(
-      state.copyWith(isLoading: true, errorMessage: null, successMessage: null),
-    );
+    emit(state.copyWith(isLoading: true));
 
     try {
-      // Format date
       final date =
           "${state.selectedDate!.year}-${state.selectedDate!.month.toString().padLeft(2, '0')}-${state.selectedDate!.day.toString().padLeft(2, '0')}";
 
-      // Format time
-      final time = formatTime24(state.selectedTime!);
+      final time = formatTime24(selectedTime);
 
-      // Call API
       final result = await _service.bookAppointment(
         doctorId: doctor["id"],
         date: date,
         time: time,
       );
-
-      if (isClosed) return;
 
       emit(
         state.copyWith(
@@ -94,7 +132,6 @@ class DoctorDetailsCubit extends Cubit<DoctorDetailsState> {
         ),
       );
     } catch (e) {
-      if (isClosed) return;
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }

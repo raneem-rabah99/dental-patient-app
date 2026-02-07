@@ -16,7 +16,7 @@ class DoctorDetailsState {
   });
 
   factory DoctorDetailsState.initial() {
-    return DoctorDetailsState(
+    return const DoctorDetailsState(
       isLoading: false,
       selectedDate: null,
       selectedTime: null,
@@ -35,10 +35,9 @@ class DoctorDetailsState {
     return DoctorDetailsState(
       isLoading: isLoading ?? this.isLoading,
       selectedDate: selectedDate ?? this.selectedDate,
-      selectedTime: selectedTime ?? this.selectedTime,
-      // هنا الأهم 👇 نحافظ على القيم القديمة لو ما مررت قيمة جديدة
-      errorMessage: errorMessage ?? this.errorMessage,
-      successMessage: successMessage ?? this.successMessage,
+      selectedTime: selectedTime,
+      errorMessage: errorMessage,
+      successMessage: successMessage,
     );
   }
 }

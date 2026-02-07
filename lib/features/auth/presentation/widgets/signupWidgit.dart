@@ -84,26 +84,40 @@ Widget buildTextField(
   bool isPassword = false,
   String? Function(String?)? validator,
 }) {
-  return TextFormField(
-    controller: controller,
-    obscureText: isPassword,
-    decoration: InputDecoration(
-      hintText: hintText,
-      hintStyle: TextStyle(
-        color: Color.fromARGB(255, 77, 77, 77),
-        fontSize: 10,
+  return Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(
+        maxWidth: 420, // 👈 desktop limit only
       ),
-      prefixIcon: icon,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      child: TextFormField(
+        style: const TextStyle(
+          color: Color.fromARGB(255, 0, 0, 0),
+          fontSize: 14,
+        ),
 
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: Color.fromARGB(255, 77, 77, 77),
-        ), // Change color to red for testing
+        cursorColor: AppColor.darkblue,
+        controller: controller,
+        obscureText: isPassword,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(
+            color: Color.fromARGB(255, 77, 77, 77),
+            fontSize: 10,
+          ),
+          prefixIcon: icon,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppColor.darkblue),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: AppColor.darkblue, width: 2),
+          ),
+        ),
+        validator: validator,
       ),
     ),
-    validator: validator,
   );
 }
 

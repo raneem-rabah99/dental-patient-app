@@ -1,21 +1,18 @@
+import 'dart:io';
 import 'package:dentaltreatment/core/theme/app_assets.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
-import 'package:dentaltreatment/features/home/data/models/booking_card_model.dart';
-import 'package:dentaltreatment/features/home/presentation/managers/booking%20_card_cubit.dart';
-import 'package:dentaltreatment/features/home/presentation/pages/home_page.dart';
+import 'package:dentaltreatment/features/home/data/models/booking_status_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class BookingOnProgressItem extends StatefulWidget {
-  final BookingCardModel bookingOnProgress;
+  final BookingStatusModel booking;
 
-  const BookingOnProgressItem({Key? key, required this.bookingOnProgress})
+  const BookingOnProgressItem({Key? key, required this.booking})
     : super(key: key);
 
   @override
-  _BookingOnProgressItemState createState() => _BookingOnProgressItemState();
+  State<BookingOnProgressItem> createState() => _BookingOnProgressItemState();
 }
 
 class _BookingOnProgressItemState extends State<BookingOnProgressItem> {
@@ -25,22 +22,18 @@ class _BookingOnProgressItemState extends State<BookingOnProgressItem> {
   @override
   void initState() {
     super.initState();
-    _loadUserImage();
+    _loadImage();
   }
 
-  Future<void> _loadUserImage() async {
-    String? storedImagePath = await _secureStorage.read(key: 'image');
-    setState(() {
-      imagePath = storedImagePath;
-    });
-    print("Retrieved Booking Image Path: $imagePath");
+  Future<void> _loadImage() async {
+    String? path = await _secureStorage.read(key: 'image');
+    setState(() => imagePath = path);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 600,
-      margin: const EdgeInsets.only(right: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -69,115 +62,88 @@ class _BookingOnProgressItemState extends State<BookingOnProgressItem> {
               ),
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     CircleAvatar(
                       radius: 24,
                       backgroundImage:
-                          imagePath != null && File(imagePath!).existsSync()
+                          (imagePath != null && File(imagePath!).existsSync())
                               ? FileImage(File(imagePath!))
                               : AssetImage(AppAssets.user) as ImageProvider,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
+
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.bookingOnProgress.userName,
+                          widget.booking.doctorName,
                           style: const TextStyle(
+                            color: Colors.black,
                             fontFamily: 'Serif',
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.location_on, size: 13),
+                            const Icon(
+                              Icons.location_on,
+                              size: 13,
+                              color: Colors.black,
+                            ),
                             const SizedBox(width: 5),
-                            Text(
-                              widget.bookingOnProgress.location,
-                              style: const TextStyle(
-                                fontFamily: 'Serif',
-                                fontSize: 12,
-                                color: Colors.black,
+                            SizedBox(
+                              width: 180,
+                              child: Text(
+                                widget.booking.doctorAddress,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontFamily: 'Serif',
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [],
-                    ),
                   ],
                 ),
-                const SizedBox(height: 6),
+
+                const SizedBox(height: 8),
+
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(Icons.calendar_today, size: 13),
+                    const Icon(
+                      Icons.calendar_today,
+                      size: 13,
+                      color: Colors.black,
+                    ),
                     const SizedBox(width: 5),
-                    Text("From: ${widget.bookingOnProgress.date}"),
-                    const SizedBox(width: 10),
-                    Icon(Icons.access_time, size: 13),
-                    const SizedBox(width: 5),
-                    Text("At: ${widget.bookingOnProgress.time}"),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => HomePage()),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: Color(0xffE3E3E3)),
-                        ),
-                      ),
-                      child: const Text(
-                        "Edit",
-                        style: TextStyle(
-                          fontFamily: 'Serif',
-                          color: Color(0xff666666),
-                        ),
-                      ),
+                    Text(
+                      "From: ${widget.booking.date}",
+                      style: TextStyle(color: Colors.black),
                     ),
                     const SizedBox(width: 10),
-                    TextButton(
-                      onPressed: () {
-                        context.read<BookingCardCubit>().deleteBooking(
-                          widget.bookingOnProgress,
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: Color(0xffE3E3E3)),
-                        ),
-                      ),
-                      child: const Text(
-                        "Cancel",
-                        style: TextStyle(
-                          fontFamily: 'Serif',
-                          color: Color(0xff666666),
-                        ),
-                      ),
+                    const Icon(
+                      Icons.access_time,
+                      size: 13,
+                      color: Colors.black,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      "At: ${widget.booking.time}",
+                      style: TextStyle(color: Colors.black),
                     ),
                   ],
                 ),

@@ -1,4 +1,6 @@
 import 'package:dentaltreatment/core/theme/app_color.dart';
+import 'package:dentaltreatment/core/localization/app_strings.dart';
+import 'package:dentaltreatment/features/home/presentation/managers/language_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dentaltreatment/features/home/data/models/doctor_model.dart';
@@ -18,31 +20,44 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF7F9FB),
+    final isArabic = context.watch<LanguageCubit>().isArabic;
+    final strings = AppStrings(isArabic);
 
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: const Text(
-          "Doctors",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF234E9D),
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Directionality(
+          textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+          child: AppBar(
+            backgroundColor: theme.appBarTheme.backgroundColor,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(
+              strings.doctors,
+              style: theme.appBarTheme.titleTextStyle,
+            ),
+            centerTitle: true,
           ),
         ),
       ),
 
       body: Column(
         children: [
+          // ===== INFO CARD =====
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [Color(0xFF4C89FF), Color(0xFF6AA7FF)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -50,16 +65,16 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.medical_information,
+                  const Icon(
+                    Icons.person_search,
                     color: Colors.white,
                     size: 28,
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      "Click the right doctor for your needs.\nSearch by doctor, specialization, or location.",
-                      style: TextStyle(
+                      strings.doctorsHint,
+                      style: const TextStyle(
                         fontSize: 15,
                         color: Colors.white,
                         height: 1.3,
@@ -72,6 +87,7 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
             ),
           ),
 
+          // ===== SEARCH =====
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
@@ -79,11 +95,10 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
               onChanged:
                   (value) => context.read<DoctorCubit>().searchDoctors(value),
               decoration: InputDecoration(
-                hintText: "Search...",
-                hintStyle: TextStyle(fontSize: 15),
-                prefixIcon: const Icon(Icons.search, color: Colors.blue),
+                hintText: strings.search,
+                prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: theme.cardColor,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
@@ -92,11 +107,14 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
             ),
           ),
 
+          // ===== LIST =====
           Expanded(
             child: BlocBuilder<DoctorCubit, DoctorState>(
               builder: (context, state) {
                 if (state.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return Center(
+                    child: CircularProgressIndicator(color: AppColor.darkblue),
+                  );
                 }
 
                 if (state.error != null) {
@@ -106,7 +124,7 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
                 final doctors = state.doctors;
 
                 if (doctors.isEmpty) {
-                  return const Center(child: Text("No doctors found"));
+                  return Center(child: Text(strings.noDoctors));
                 }
 
                 return ListView.builder(
@@ -114,8 +132,7 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
                   padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) {
                     final doctor = doctors[index];
-
-                    return _doctorItem(context, doctor);
+                    return _doctorItem(context, doctor, strings);
                   },
                 );
               },
@@ -126,7 +143,13 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
     );
   }
 
-  Widget _doctorItem(BuildContext context, DoctorModel doctor) {
+  Widget _doctorItem(
+    BuildContext context,
+    DoctorModel doctor,
+    AppStrings strings,
+  ) {
+    final theme = Theme.of(context);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -135,7 +158,7 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
             builder:
                 (_) => DoctorDetailsPage(
                   doctor: {
-                    "id": doctor.id, // ← FIXED 🔥🔥🔥 IMPORTANT
+                    "id": doctor.id,
                     "name": doctor.name,
                     "location": context.read<DoctorCubit>().cleanAddress(
                       doctor.location,
@@ -143,8 +166,8 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
                     "specialization": doctor.specialization,
                     "distance":
                         doctor.distanceKm != null
-                            ? "${doctor.distanceKm!.toStringAsFixed(2)} KM"
-                            : "N/A",
+                            ? "${doctor.distanceKm!.toStringAsFixed(2)} ${strings.km}"
+                            : strings.notAvailable,
                     "time": doctor.time,
                     "image": doctor.photo,
                   },
@@ -156,11 +179,11 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.14),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -184,19 +207,13 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    doctor.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
+                  Text(doctor.name, style: theme.textTheme.titleMedium),
                   Text(
                     context.read<DoctorCubit>().cleanAddress(doctor.location),
-                    style: const TextStyle(color: Colors.grey),
+                    style: theme.textTheme.bodySmall,
                   ),
-                  Text("Specialization: ${doctor.specialization}"),
-                  Text("Time: ${doctor.time}"),
+                  Text("${strings.specialization}: ${doctor.specialization}"),
+                  Text("${strings.time}: ${doctor.time}"),
                 ],
               ),
             ),
@@ -206,8 +223,8 @@ class _DoctorsListPageState extends State<DoctorsListPage> {
                 const Icon(Icons.location_on, color: Colors.blue),
                 Text(
                   doctor.distanceKm != null
-                      ? "${doctor.distanceKm!.toStringAsFixed(2)} KM"
-                      : "N/A",
+                      ? "${doctor.distanceKm!.toStringAsFixed(2)} ${strings.km}"
+                      : strings.notAvailable,
                 ),
               ],
             ),

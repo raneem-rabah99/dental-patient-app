@@ -12,23 +12,22 @@ class DeletePhotoCubit extends Cubit<DeletePhotoState> {
   Future<void> deletePhoto() async {
     if (state.isLoading) return;
 
-    if (isClosed) return;
     emit(state.copyWith(isLoading: true, errorMessage: null));
 
     try {
       final result = await deletePhotoService.deletePhoto();
-
-      if (isClosed) return;
+      if (isClosed) return; // ✅ بعد await
 
       if (result.deleted) {
         await storage.delete(key: 'image');
+        if (isClosed) return; // ✅ بعد await ثاني
 
         emit(state.copyWith(isLoading: false, successMessage: result.message));
       } else {
         emit(state.copyWith(isLoading: false, errorMessage: result.message));
       }
     } catch (e) {
-      if (isClosed) return;
+      if (isClosed) return; // ✅ في catch
       emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }

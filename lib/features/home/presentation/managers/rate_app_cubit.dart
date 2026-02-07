@@ -12,7 +12,7 @@ class RateAppCubit extends Cubit<RateAppState> {
 
     try {
       final response = await service.sendRate(rate: rate, feedback: feedback);
-
+      if (isClosed) return;
       if (response["status"] == true) {
         emit(
           state.copyWith(

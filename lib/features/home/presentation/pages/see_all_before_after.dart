@@ -1,3 +1,4 @@
+import 'package:dentaltreatment/core/theme/app_color.dart';
 import 'package:dentaltreatment/features/home/data/sources/favorite_case_service.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/favorite_case_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/favorite_case_state.dart';
@@ -16,7 +17,9 @@ class SeeAllBeforeAfter extends StatelessWidget {
       child: BlocBuilder<FavoriteCaseCubit, FavoriteCaseState>(
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: AppColor.darkblue),
+            );
           }
           final items = state.cases;
           return Scaffold(
@@ -36,7 +39,7 @@ class SeeAllBeforeAfter extends StatelessWidget {
                 const SizedBox(height: 5),
 
                 SizedBox(
-                  height: 500,
+                  height: 680,
                   child: ListView.builder(
                     scrollDirection: Axis.vertical,
                     padding: const EdgeInsets.only(left: 8.0),

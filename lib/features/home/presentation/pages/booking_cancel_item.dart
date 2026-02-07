@@ -1,16 +1,16 @@
+import 'dart:io';
 import 'package:dentaltreatment/core/theme/app_assets.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
-import 'package:dentaltreatment/features/home/data/models/booking_card_model.dart';
+import 'package:dentaltreatment/features/home/data/models/booking_status_model.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class BookingCancelItem extends StatelessWidget {
-  final BookingCardModel bookingCancel;
-  final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
+  final BookingStatusModel booking;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  BookingCancelItem({Key? key, required this.bookingCancel}) : super(key: key);
+  BookingCancelItem({Key? key, required this.booking}) : super(key: key);
 
   Future<String?> _getUserImage() async {
     return await _secureStorage.read(key: 'image');
@@ -24,13 +24,13 @@ class BookingCancelItem extends StatelessWidget {
         String? imagePath = snapshot.data;
         String defaultImagePath = AppAssets.user;
 
-        ImageProvider? imageProvider;
+        ImageProvider imageProvider;
+
         if (imagePath != null && File(imagePath).existsSync()) {
-          if (kIsWeb) {
-            imageProvider = NetworkImage(imagePath);
-          } else {
-            imageProvider = FileImage(File(imagePath));
-          }
+          imageProvider =
+              kIsWeb
+                  ? NetworkImage(imagePath)
+                  : FileImage(File(imagePath)) as ImageProvider;
         } else {
           imageProvider = AssetImage(defaultImagePath);
         }
@@ -51,6 +51,7 @@ class BookingCancelItem extends StatelessWidget {
           ),
           child: Stack(
             children: [
+              // blue left strip
               Positioned(
                 left: 0,
                 top: 0,
@@ -66,37 +67,45 @@ class BookingCancelItem extends StatelessWidget {
                   ),
                 ),
               ),
+
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Row top info
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         CircleAvatar(
                           radius: 24,
                           backgroundImage: imageProvider,
                         ),
+
                         const SizedBox(width: 12),
+
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              bookingCancel.userName,
+                              booking.doctorName,
                               style: const TextStyle(
+                                color: Colors.black,
                                 fontFamily: 'Serif',
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 15,
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              bookingCancel.location,
-                              style: const TextStyle(
-                                fontFamily: 'Serif',
-                                fontSize: 12,
-                                color: Colors.black54,
+                            SizedBox(
+                              width: 200,
+                              child: Text(
+                                booking.doctorAddress,
+                                style: const TextStyle(
+                                  fontFamily: 'Serif',
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -104,48 +113,39 @@ class BookingCancelItem extends StatelessWidget {
                         const Spacer(),
                       ],
                     ),
+
                     const SizedBox(height: 10),
+
+                    // Date + time
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Icon(Icons.calendar_today, size: 10),
+                        Icon(Icons.calendar_today, size: 12),
                         const SizedBox(width: 5),
                         Text(
-                          "From: ${bookingCancel.date}",
-                          style: TextStyle(
-                            fontFamily: 'Serif',
-                            fontSize: 10,
-                            color: Colors.black,
-                          ),
+                          "From: ${booking.date}",
+                          style: TextStyle(fontFamily: 'Serif', fontSize: 11),
                         ),
                         const SizedBox(width: 10),
-                        Icon(Icons.access_time, size: 10),
+                        Icon(Icons.access_time, size: 12),
                         const SizedBox(width: 5),
                         Text(
-                          "At: ${bookingCancel.time}",
-                          style: TextStyle(
-                            fontFamily: 'Serif',
-                            fontSize: 10,
-                            color: Colors.black,
-                          ),
+                          "At: ${booking.time}",
+                          style: TextStyle(fontFamily: 'Serif', fontSize: 11),
                         ),
-                        const SizedBox(width: 25),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Reason of Cancellation",
-                          style: TextStyle(
-                            fontFamily: 'Serif',
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red.shade700,
-                          ),
-                        ),
-                      ],
+
+                    const SizedBox(height: 12),
+
+                    // Cancel note
+                    Text(
+                      "Reason of Cancellation",
+                      style: TextStyle(
+                        fontFamily: 'Serif',
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red.shade700,
+                      ),
                     ),
                   ],
                 ),

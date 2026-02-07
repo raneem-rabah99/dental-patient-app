@@ -1,8 +1,10 @@
 import 'package:dentaltreatment/core/classes/icons_classes.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
+import 'package:dentaltreatment/core/localization/app_strings.dart';
 import 'package:dentaltreatment/features/home/data/sources/favorite_case_service.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/favorite_case_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/favorite_case_state.dart';
+import 'package:dentaltreatment/features/home/presentation/managers/language_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/pages/before_after_item.dart';
 import 'package:dentaltreatment/features/home/presentation/pages/see_all_before_after.dart';
 import 'package:flutter/material.dart';
@@ -13,13 +15,17 @@ class BeforeAfterSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings(context.watch<LanguageCubit>().isArabic);
+
     return BlocProvider(
       create:
           (_) => FavoriteCaseCubit(FavoriteCaseService())..loadFavoriteCases(),
       child: BlocBuilder<FavoriteCaseCubit, FavoriteCaseState>(
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: AppColor.darkblue),
+            );
           }
 
           final items = state.cases;
@@ -27,14 +33,13 @@ class BeforeAfterSection extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ---------------- HEADER ----------------
               Padding(
                 padding: const EdgeInsets.only(top: 20.0, left: 14, right: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      "Top Doctors",
+                      strings.topDoctors,
                       style: TextStyle(
                         fontFamily: 'Serif',
                         fontSize: 25,
@@ -59,27 +64,24 @@ class BeforeAfterSection extends StatelessWidget {
                       },
                       child: Row(
                         children: [
-                          const Text(
-                            "See All",
+                          Text(
+                            strings.seeAll,
                             style: TextStyle(
                               fontFamily: 'Serif',
                               fontSize: 17,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black54,
+                              color: AppColor.darkblue,
                             ),
                           ),
                           const SizedBox(width: 6),
-                          Iconarowright.arowright,
+                          Iconarowright.arrow(context),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 10),
-
-              // ---------------- LIST ----------------
               SizedBox(
                 height: 300,
                 child: ListView.builder(
@@ -87,11 +89,7 @@ class BeforeAfterSection extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 15.0),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
-                    final caseItem = items[index];
-
-                    return BeforeAfterItem(
-                      caseItem: caseItem, // <--- USE FavoriteCaseModel
-                    );
+                    return BeforeAfterItem(caseItem: items[index]);
                   },
                 ),
               ),

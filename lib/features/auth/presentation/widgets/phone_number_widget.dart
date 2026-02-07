@@ -13,12 +13,10 @@ class PhoneNumberInput extends StatefulWidget {
   final String hintText;
   final TextStyle? textStyle;
   final InputDecoration? decoration;
-  final bool showFlag; // New property to toggle flag visibility
-  final bool showPhoneIcon; // New property to toggle phone icon visibility
-  final bool
-  showIconDown; // New property to toggle the dropdown icon visibility
-  final bool
-  showCountryCode; // New property to toggle the country code visibility
+  final bool showFlag;
+  final bool showPhoneIcon;
+  final bool showIconDown;
+  final bool showCountryCode;
 
   const PhoneNumberInput({
     Key? key,
@@ -29,10 +27,10 @@ class PhoneNumberInput extends StatefulWidget {
     this.hintText = '+966 5656 5656 665',
     this.textStyle,
     this.decoration,
-    this.showFlag = true, // Default: show flag
-    this.showPhoneIcon = true, // Default: show phone icon
-    this.showIconDown = true, // Default: show dropdown icon
-    this.showCountryCode = true, // Default: show country code
+    this.showFlag = true,
+    this.showPhoneIcon = true,
+    this.showIconDown = true,
+    this.showCountryCode = true,
   }) : super(key: key);
 
   @override
@@ -54,72 +52,83 @@ class _PhoneNumberInputState extends State<PhoneNumberInput> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Color.fromARGB(255, 77, 77, 77)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          // Country code picker with optional flag and icons
-          GestureDetector(
-            onTap: _openCountryPicker,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 15),
-
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (widget.showFlag)
-                    // Flag Icon
-                    CountryPickerUtils.getDefaultFlagImage(_selectedCountry),
-                  SizedBox(width: widget.showFlag ? 8 : 0),
-                  if (widget.showCountryCode)
-                    Text(
-                      '+${_selectedCountry.phoneCode}',
-                      style:
-                          widget.textStyle ??
-                          TextStyle(fontFamily: 'Serif', fontSize: 16),
-                    ),
-                  // Conditionally show the dropdown icon
-                  if (widget.showIconDown) ...[
-                    SizedBox(width: 8),
-                    IconDown.chevronDown, // Dropdown icon
-                  ],
-                  if (widget.showPhoneIcon) SizedBox(width: 8),
-                  if (widget.showPhoneIcon)
-                    IconePhone.phone, // Phone icon near the flag
-                ],
-              ),
-            ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: 420, // 👈 desktop width limit only
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColor.darkblue),
+            borderRadius: BorderRadius.circular(12),
           ),
-          // Phone number input
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: TextField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                style: widget.textStyle,
-                decoration:
-                    (widget.decoration ??
+          child: Row(
+            children: [
+              // Country code picker
+              GestureDetector(
+                onTap: _openCountryPicker,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 15,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.showFlag)
+                        CountryPickerUtils.getDefaultFlagImage(
+                          _selectedCountry,
+                        ),
+                      SizedBox(width: widget.showFlag ? 8 : 0),
+                      if (widget.showCountryCode)
+                        Text(
+                          '+${_selectedCountry.phoneCode}',
+                          style:
+                              widget.textStyle ??
+                              const TextStyle(
+                                fontFamily: 'Serif',
+                                fontSize: 16,
+                              ),
+                        ),
+                      if (widget.showIconDown) ...[
+                        const SizedBox(width: 8),
+                        IconDown.chevronDown,
+                      ],
+                      if (widget.showPhoneIcon) const SizedBox(width: 8),
+                      if (widget.showPhoneIcon) IconePhone.phone,
+                    ],
+                  ),
+                ),
+              ),
+
+              // Phone number input
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: TextField(
+                    cursorColor: AppColor.darkblue,
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    style: widget.textStyle,
+                    decoration:
+                        widget.decoration ??
                         InputDecoration(
                           hintText: widget.hintText,
-                          hintStyle: TextStyle(
+                          hintStyle: const TextStyle(
                             fontFamily: 'Serif',
                             color: Color(0xffA3A3A3),
                             fontSize: 12,
-                          ), // Set the hint text color
-                          border:
-                              InputBorder
-                                  .none, // Keeps the border none, still applies the hintStyle
-                        )),
-                onChanged: (value) => _notifyParent(),
+                          ),
+                          border: InputBorder.none,
+                        ),
+                    onChanged: (value) => _notifyParent(),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -131,11 +140,13 @@ class _PhoneNumberInputState extends State<PhoneNumberInput> {
           (context) => Theme(
             data: Theme.of(context).copyWith(primaryColor: AppColor.darkblue),
             child: CountryPickerDialog(
-              titlePadding: EdgeInsets.all(8.0),
+              titlePadding: const EdgeInsets.all(8.0),
               searchCursorColor: AppColor.darkblue,
-              searchInputDecoration: InputDecoration(hintText: 'Search...'),
+              searchInputDecoration: const InputDecoration(
+                hintText: 'Search...',
+              ),
               isSearchable: true,
-              title: Text(
+              title: const Text(
                 'Select your phone code',
                 style: TextStyle(fontFamily: 'Serif'),
               ),

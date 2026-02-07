@@ -1,25 +1,51 @@
 import 'package:dentaltreatment/core/theme/app_color.dart';
+import 'package:dentaltreatment/core/localization/app_strings.dart';
+import 'package:dentaltreatment/features/home/presentation/managers/language_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/doctor_details_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/doctor_details_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class DoctorDetailsPage extends StatelessWidget {
+class DoctorDetailsPage extends StatefulWidget {
   final Map<String, dynamic> doctor;
 
   const DoctorDetailsPage({super.key, required this.doctor});
 
   @override
+  State<DoctorDetailsPage> createState() => _DoctorDetailsPageState();
+}
+
+class _DoctorDetailsPageState extends State<DoctorDetailsPage> {
+  late final DoctorDetailsCubit cubit;
+
+  @override
+  void initState() {
+    super.initState();
+    cubit = DoctorDetailsCubit(widget.doctor);
+  }
+
+  @override
+  void dispose() {
+    cubit.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => DoctorDetailsCubit(doctor),
+    final isArabic = context.watch<LanguageCubit>().isArabic;
+    final strings = AppStrings(isArabic);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return BlocProvider.value(
+      value: cubit,
       child: BlocConsumer<DoctorDetailsCubit, DoctorDetailsState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.errorMessage!),
-                backgroundColor: const Color.fromARGB(255, 255, 156, 156),
+                backgroundColor: colors.error,
               ),
             );
           }
@@ -28,51 +54,56 @@ class DoctorDetailsPage extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.successMessage!),
-                backgroundColor: const Color.fromARGB(255, 69, 196, 255),
+                backgroundColor: colors.primary,
               ),
             );
           }
         },
-
         builder: (context, state) {
-          final cubit = context.read<DoctorDetailsCubit>();
-
-          ImageProvider imageProvider =
-              doctor["image"] != null &&
-                      doctor["image"].toString().startsWith("http")
-                  ? NetworkImage(doctor["image"])
+          final ImageProvider imageProvider =
+              widget.doctor["image"] != null &&
+                      widget.doctor["image"].toString().startsWith("http")
+                  ? NetworkImage(widget.doctor["image"])
                   : const AssetImage("assets/images/default_profile.png");
 
           return Scaffold(
-            backgroundColor: const Color(0xFFF7F9FB),
+            backgroundColor: theme.scaffoldBackgroundColor,
 
             appBar: AppBar(
-              backgroundColor: Colors.white,
+              backgroundColor: theme.appBarTheme.backgroundColor,
               elevation: 0,
-              title: Text(
-                doctor["name"],
-                style: const TextStyle(
-                  fontFamily: "Gabarito",
-                  fontSize: 18,
-                  color: Color(0xFF234E9D),
-                  fontWeight: FontWeight.w700,
-                ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new),
+                onPressed: () => Navigator.pop(context),
               ),
+              title: Text(
+                widget.doctor["name"],
+                style: theme.appBarTheme.titleTextStyle,
+              ),
+              centerTitle: true,
             ),
 
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _profileCard(doctor, imageProvider),
+                  _profileCard(context, widget.doctor, imageProvider, strings),
 
                   const SizedBox(height: 20),
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _beforeAfterCard('Before', 'assets/images/before.png'),
-                      _beforeAfterCard('After', 'assets/images/after.png'),
+                      _beforeAfterCard(
+                        context,
+                        strings.before,
+                        'assets/images/before.png',
+                      ),
+                      _beforeAfterCard(
+                        context,
+                        strings.after,
+                        'assets/images/after.png',
+                      ),
                     ],
                   ),
 
@@ -81,25 +112,51 @@ class DoctorDetailsPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      // ================= TIME PICKER =================
                       _pickerButton(
+                        context,
                         label:
                             state.selectedTime == null
-                                ? "Select Time"
+                                ? strings.selectTime
                                 : state.selectedTime!.format(context),
                         icon: Icons.access_time,
                         onTap: () async {
+                          final initial = cubit.rangeStart;
+
                           final t = await showTimePicker(
                             context: context,
-                            initialTime: TimeOfDay.now(),
+                            initialTime: initial,
+
+                            // 👇 keep default Material time picker UI (AM / PM)
+                            builder: (context, child) {
+                              return Theme(
+                                data: Theme.of(context).copyWith(
+                                  timePickerTheme: TimePickerThemeData(
+                                    dialHandColor: AppColor.darkblue,
+                                    hourMinuteColor: AppColor.darkblue
+                                        .withOpacity(0.15),
+                                    hourMinuteTextColor: AppColor.darkblue,
+                                    dayPeriodColor: AppColor.darkblue
+                                        .withOpacity(0.2),
+                                    dayPeriodTextColor: AppColor.darkblue,
+                                  ),
+                                ),
+                                child: child!,
+                              );
+                            },
                           );
-                          if (t != null) cubit.selectTime(t);
+
+                          // 🔥 DO NOT CHANGE LOGIC
+                          cubit.selectTime(t ?? initial);
                         },
                       ),
 
+                      // ================= DATE PICKER =================
                       _pickerButton(
+                        context,
                         label:
                             state.selectedDate == null
-                                ? "Select Date"
+                                ? strings.selectDate
                                 : "${state.selectedDate!.day}/${state.selectedDate!.month}/${state.selectedDate!.year}",
                         icon: Icons.calendar_month,
                         onTap: () async {
@@ -118,7 +175,7 @@ class DoctorDetailsPage extends StatelessWidget {
                   const SizedBox(height: 40),
 
                   state.isLoading
-                      ? const CircularProgressIndicator()
+                      ? CircularProgressIndicator(color: AppColor.darkblue)
                       : ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColor.darkblue,
@@ -130,13 +187,10 @@ class DoctorDetailsPage extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        onPressed: () {
-                          cubit.bookAppointment();
-                        },
-                        child: const Text(
-                          "Take a Date",
-                          style: TextStyle(
-                            fontFamily: "Gabarito",
+                        onPressed: cubit.bookAppointment,
+                        child: Text(
+                          strings.takeDate,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                           ),
@@ -151,19 +205,22 @@ class DoctorDetailsPage extends StatelessWidget {
     );
   }
 
-  // ----------------------------------------------------------
-
+  // ================= PROFILE CARD =================
   Widget _profileCard(
+    BuildContext context,
     Map<String, dynamic> doctor,
     ImageProvider imageProvider,
+    AppStrings strings,
   ) {
+    final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(blurRadius: 10, color: Colors.grey.withOpacity(0.15)),
+          BoxShadow(blurRadius: 10, color: Colors.black.withOpacity(0.1)),
         ],
       ),
       child: Row(
@@ -179,37 +236,23 @@ class DoctorDetailsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(doctor["name"], style: theme.textTheme.titleMedium),
                 Text(
-                  doctor["name"],
-                  style: const TextStyle(
-                    fontFamily: "Gabarito",
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                  ),
+                  doctor["location"] ?? "",
+                  style: theme.textTheme.bodySmall,
                 ),
                 Text(
-                  (doctor["location"] ?? "").toString(),
-                  style: const TextStyle(
-                    fontFamily: "Gabarito",
-                    color: Colors.grey,
-                    fontSize: 13,
-                  ),
+                  "${strings.specialization}: ${doctor["specialization"]}",
+                  style: theme.textTheme.bodySmall,
                 ),
                 Text(
-                  "Specialization: ${doctor["specialization"]}",
-                  style: const TextStyle(fontFamily: "Gabarito", fontSize: 12),
-                ),
-                Text(
-                  "Distance: ${doctor["distance"]}",
-                  style: const TextStyle(fontFamily: "Gabarito", fontSize: 12),
+                  "${strings.distance}: ${doctor["distance"]}",
+                  style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  "Available Time: ${doctor["time"]}",
-                  style: const TextStyle(
-                    fontFamily: "Gabarito",
-                    fontSize: 12,
-                    color: Colors.blue,
+                  "${strings.availableTime}: ${doctor["time"]}",
+                  style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -221,14 +264,17 @@ class DoctorDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _beforeAfterCard(String label, String img) {
+  // ================= BEFORE / AFTER CARD =================
+  Widget _beforeAfterCard(BuildContext context, String label, String img) {
+    final theme = Theme.of(context);
+
     return Container(
       width: 150,
       height: 140,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+        border: Border.all(color: theme.dividerColor),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -237,8 +283,7 @@ class DoctorDetailsPage extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              fontFamily: "Gabarito",
+            style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -247,11 +292,15 @@ class DoctorDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _pickerButton({
+  // ================= PICKER BUTTON =================
+  Widget _pickerButton(
+    BuildContext context, {
     required String label,
     required IconData icon,
-    required Function() onTap,
+    required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -259,19 +308,16 @@ class DoctorDetailsPage extends StatelessWidget {
         width: 150,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.blueAccent),
+            Icon(icon, color: theme.iconTheme.color),
             const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(fontFamily: "Gabarito", fontSize: 14),
-            ),
+            Text(label, style: theme.textTheme.bodyMedium),
           ],
         ),
       ),

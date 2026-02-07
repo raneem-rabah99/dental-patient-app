@@ -11,36 +11,42 @@ class FavoriteCaseCubit extends Cubit<FavoriteCaseState> {
   Future<void> loadFavoriteCases() async {
     emit(state.copyWith(isLoading: true));
 
-    final result = await service.getFavoriteCases();
+    try {
+      final result = await service.getFavoriteCases();
+      if (isClosed) return; // ✅ بعد await
 
-    if (result.isEmpty) {
-      // fallback default if API fails
-      emit(
-        state.copyWith(
-          isLoading: false,
-          cases: [
-            FavoriteCaseModel(
-              firstName: "Alice",
-              lastName: "Johnson",
-              averageRate: 4.5,
-            ),
-            FavoriteCaseModel(
-              firstName: "John",
-              lastName: "Doe",
-              averageRate: 4.5,
-            ),
-          ],
-          errorMessage: "Failed to load data from API. Showing default items.",
-        ),
-      );
-    } else {
-      emit(
-        state.copyWith(
-          isLoading: false,
-          cases: result,
-          successMessage: "Favorite cases loaded successfully",
-        ),
-      );
+      if (result.isEmpty) {
+        emit(
+          state.copyWith(
+            isLoading: false,
+            cases: [
+              FavoriteCaseModel(
+                firstName: "Alice",
+                lastName: "Johnson",
+                averageRate: 4.5,
+              ),
+              FavoriteCaseModel(
+                firstName: "John",
+                lastName: "Doe",
+                averageRate: 4.5,
+              ),
+            ],
+            errorMessage:
+                "Failed to load data from API. Showing default items.",
+          ),
+        );
+      } else {
+        emit(
+          state.copyWith(
+            isLoading: false,
+            cases: result,
+            successMessage: "Favorite cases loaded successfully",
+          ),
+        );
+      }
+    } catch (e) {
+      if (isClosed) return; // ✅ مهم جدًا
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
     }
   }
 }

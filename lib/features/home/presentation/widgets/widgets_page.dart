@@ -1,3 +1,4 @@
+import 'package:dentaltreatment/core/localization/app_strings.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
 import 'package:flutter/material.dart';
 
@@ -10,6 +11,7 @@ Widget buildTextFieldEdit(
   return Padding(
     padding: const EdgeInsets.only(bottom: 4.0),
     child: TextFormField(
+      cursorColor: AppColor.darkblue,
       controller: controller,
       obscureText: isPassword,
       decoration: InputDecoration(
@@ -43,7 +45,8 @@ Widget buildTextFieldEdit(
           borderRadius: BorderRadius.circular(8), // Rounded corners
         ),
       ),
-      validator: (value) => value!.isEmpty ? 'Please enter $hintText' : null,
+      validator:
+          (value) => value!.isEmpty ? AppStrings(true).selectImageFirst : null,
     ),
   );
 }

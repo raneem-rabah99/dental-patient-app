@@ -1,4 +1,5 @@
 import 'package:dentaltreatment/core/classes/icons_classes.dart';
+import 'package:dentaltreatment/core/localization/app_strings.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/account_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/language_cubit.dart';
@@ -16,6 +17,12 @@ class SettingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = context.watch<LanguageCubit>().isArabic;
+    final strings = AppStrings(isArabic);
+
+    // ✅ مهم: نعرف هل الوضع داكن
+    final isDark = context.watch<ThemeCubit>().state == ThemeMode.dark;
+
     return BlocListener<RateAppCubit, RateAppState>(
       listener: (context, state) {
         if (state.success != null) {
@@ -29,130 +36,138 @@ class SettingPage extends StatelessWidget {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF7F9FB),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF7F9FB),
-          elevation: 0,
-          leading: IconButton(
-            icon: Iconarrowleft.arowleft,
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-                (route) => false,
-              );
-            },
-          ),
-          title: const Text(
-            'Setting',
-            style: TextStyle(
-              fontFamily: 'Gabarito',
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF234E9D),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Directionality(
+            textDirection: isArabic ? TextDirection.ltr : TextDirection.rtl,
+            child: AppBar(
+              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+              elevation: 0,
+
+              // ❌ نمنع Flutter من التحكم بالـ leading
+              automaticallyImplyLeading: false,
+
+              // ✅ نثبت الأيقونة في اليسار دائمًا
+              actions: [
+                Directionality(
+                  textDirection: TextDirection.ltr, // يمنع الانعكاس
+                  child: IconButton(
+                    icon:
+                        isArabic
+                            ? Iconarowright.arrow(context) // → عربي
+                            : Iconarrowleft.arrow(context), // ← إنجليزي
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomePage()),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                ),
+              ],
+              title: Text(
+                strings.settings,
+                style: Theme.of(context).appBarTheme.titleTextStyle,
+              ),
+              centerTitle: true,
             ),
           ),
-          centerTitle: true,
         ),
 
         body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
 
-            // 🔵 DARK MODE
-            buildTileContainer(
-              child: settingToggle(
-                context: context,
-                title: "Dark Mode",
-                value: context.watch<ThemeCubit>().state == ThemeMode.dark,
+            // 🌙 THEME MODE (TEXT CHANGES)
+            _tileContainer(
+              context,
+              child: _toggleTile(
+                context,
+                title: isDark ? strings.LightMode : strings.darkMode,
+                value: isDark,
                 onChanged: (_) => context.read<ThemeCubit>().toggleTheme(),
               ),
             ),
 
             const SizedBox(height: 12),
 
-            // 🌍 LANGUAGE
-            buildTileContainer(
-              child: settingToggle(
-                context: context,
-                title: "Language (AR/EN)",
-                value: context.watch<LanguageCubit>().state == "ar",
+            // 🌍 Language (كما هو)
+            _tileContainer(
+              context,
+              child: _toggleTile(
+                context,
+                title: strings.language,
+                value: isArabic,
                 onChanged: (_) => context.read<LanguageCubit>().toggleLang(),
               ),
             ),
 
             const SizedBox(height: 12),
 
-            // ⭐ RATE + FEEDBACK COMBINED
-            buildTileContainer(
-              child: settingTile(
-                context: context,
-                title: "Rate & Feedback",
+            // ⭐ Rate
+            _tileContainer(
+              context,
+              child: _normalTile(
+                context,
+                title: strings.rateFeedback,
                 icon: Icons.star,
-                onTap: () => _showRateFeedbackDialog(context),
+                onTap: () => _showRateFeedbackDialog(context, strings),
               ),
             ),
 
             const SizedBox(height: 12),
 
-            // 🔴 LOGOUT
-            buildTileContainer(
-              child: settingTileRed(
-                context: context,
-                title: "Log Out",
-                onTap: () => confirmLogout(context),
+            // 🔴 Logout
+            _tileContainer(
+              context,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: _logoutTile(
+                  context,
+                  title: strings.logout,
+                  onTap: () => confirmLogout(context, strings),
+                ),
               ),
             ),
-
-            const SizedBox(height: 12),
           ],
         ),
       ),
     );
   }
 
-  // ---------------- TILE CONTAINER ----------------
-  Widget buildTileContainer({required Widget child}) {
+  // ================= TILE CONTAINER =================
+  Widget _tileContainer(BuildContext context, {required Widget child}) {
     return Container(
       width: double.infinity,
       height: 70,
-      margin: const EdgeInsets.symmetric(horizontal: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(
-            color: const Color.fromARGB(255, 216, 216, 216).withOpacity(0.2),
-            blurRadius: 6,
-            spreadRadius: 2,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
         ],
       ),
       child: child,
     );
   }
 
-  // ---------------- TOGGLE UI ----------------
-  Widget settingToggle({
-    required BuildContext context,
+  // ================= TOGGLE TILE =================
+  Widget _toggleTile(
+    BuildContext context, {
     required String title,
     required bool value,
     required Function(bool) onChanged,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'Serif',
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
+          Text(title, style: Theme.of(context).textTheme.bodyLarge),
           Switch(
             value: value,
             onChanged: onChanged,
@@ -163,129 +178,107 @@ class SettingPage extends StatelessWidget {
     );
   }
 
-  // ---------------- NORMAL TILE ----------------
-  Widget settingTile({
-    required BuildContext context,
+  // ================= NORMAL TILE =================
+  Widget _normalTile(
+    BuildContext context, {
     required String title,
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontFamily: 'Serif',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Icon(icon, size: 22, color: Colors.amber),
+            Text(title, style: Theme.of(context).textTheme.bodyLarge),
+            Icon(icon, color: Colors.amber),
           ],
         ),
       ),
     );
   }
 
-  // ---------------- RED TILE ----------------
-  Widget settingTileRed({
-    required BuildContext context,
+  // ================= LOGOUT TILE =================
+  Widget _logoutTile(
+    BuildContext context, {
     required String title,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
           title,
-          style: TextStyle(
-            fontFamily: 'Serif',
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Colors.red.shade700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: Colors.red),
         ),
       ),
     );
   }
 
-  // ---------------- RATE + FEEDBACK DIALOG (COMBINED) ----------------
-  void _showRateFeedbackDialog(BuildContext context) {
+  // ================= RATE DIALOG =================
+  void _showRateFeedbackDialog(BuildContext context, AppStrings strings) {
     double rating = 0;
-    final TextEditingController feedbackController = TextEditingController();
+    final controller = TextEditingController();
 
     showDialog(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (dialogContext, setState) {
+          builder: (_, setState) {
             return AlertDialog(
-              title: const Text("Rate & Feedback"),
+              title: Text(strings.rateFeedback),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text("Tap the stars to rate:"),
+                  Text(strings.tapStars),
                   const SizedBox(height: 10),
-
-                  // ⭐⭐⭐⭐⭐ STAR ROW
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       return IconButton(
                         icon: Icon(
                           index < rating ? Icons.star : Icons.star_border,
-                          size: 32,
                           color: Colors.amber,
                         ),
-                        onPressed: () {
-                          setState(() => rating = index + 1.0);
-                        },
+                        onPressed: () => setState(() => rating = index + 1.0),
                       );
                     }),
                   ),
-
-                  const SizedBox(height: 10),
-
                   TextField(
-                    controller: feedbackController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: "Write your feedback here...",
-                      border: OutlineInputBorder(),
+                    controller: controller,
+                    decoration: InputDecoration(
+                      hintText: strings.writeFeedback,
                     ),
                   ),
                 ],
               ),
-
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text("Cancel"),
+                  child: Text(strings.cancel),
                 ),
                 ElevatedButton(
                   onPressed: () {
                     if (rating == 0) {
                       ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        const SnackBar(
-                          content: Text("Please select a rating."),
-                        ),
+                        SnackBar(content: Text(strings.selectRating)),
                       );
                       return;
                     }
-
                     dialogContext.read<RateAppCubit>().rateApp(
                       rate: rating.toInt(),
-                      feedback: feedbackController.text.trim(),
+                      feedback: controller.text.trim(),
                     );
-
                     Navigator.pop(dialogContext);
                   },
-                  child: const Text("Send"),
+                  child: Text(strings.send),
                 ),
               ],
             );
@@ -296,76 +289,40 @@ class SettingPage extends StatelessWidget {
   }
 }
 
-// ---------------- CONFIRM LOGOUT ----------------
-void confirmLogout(BuildContext context) {
+// ================= LOGOUT =================
+void confirmLogout(BuildContext context, AppStrings strings) {
   showDialog(
     context: context,
     builder: (dialogContext) {
       return BlocListener<LogoutCubit, LogoutState>(
-        listener: (dialogContext, state) {
+        listener: (_, state) {
           if (state.isLoading) {
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(const SnackBar(content: Text("Logging out...")));
+            ).showSnackBar(SnackBar(content: Text(strings.loggingOut)));
           }
-
           if (state.success) {
-            Navigator.pop(context); // close dialog
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              "/login",
-              (route) => false,
-            ); // go to Login page
-          }
-
-          if (state.error != null) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.error!)));
+            Navigator.pushNamedAndRemoveUntil(context, "/login", (_) => false);
           }
         },
         child: AlertDialog(
-          title: const Text("Logout"),
-          content: const Text("Are you sure you want to logout?"),
+          title: Text(strings.logout),
+          content: Text(strings.confirmLogout),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text("Cancel"),
+              child: Text(strings.cancel),
             ),
             TextButton(
-              onPressed: () {
-                dialogContext.read<LogoutCubit>().logout();
-              },
-              child: const Text("Logout", style: TextStyle(color: Colors.red)),
+              onPressed: () => dialogContext.read<LogoutCubit>().logout(),
+              child: Text(
+                strings.logout,
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           ],
         ),
       );
     },
-  );
-}
-
-// ---------------- CONFIRM DELETE ----------------
-void confirmDelete(BuildContext context) {
-  showDialog(
-    context: context,
-    builder:
-        (_) => AlertDialog(
-          title: const Text("Delete Account"),
-          content: const Text("This action cannot be undone. Continue?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                context.read<AccountCubit>().deleteAccount();
-                Navigator.pop(context);
-              },
-              child: const Text("Delete", style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        ),
   );
 }

@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:dentaltreatment/core/classes/icons_classes.dart';
-import 'package:dentaltreatment/core/theme/app_color.dart';
-import 'package:dentaltreatment/features/home/data/sources/delete_photo_service.dart';
-import 'package:dentaltreatment/features/home/data/sources/update_photo_service.dart';
+
+import 'package:dentaltreatment/core/localization/app_strings.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/delete_photo_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/delete_photo_state.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/update_photo_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/managers/update_photo_state.dart';
+import 'package:dentaltreatment/features/home/presentation/managers/language_cubit.dart';
 import 'package:dentaltreatment/features/home/presentation/pages/home_page.dart';
 import 'package:dentaltreatment/features/home/presentation/widgets/widgets_page.dart';
 import 'package:flutter/material.dart';
@@ -23,9 +23,9 @@ class EditPage extends StatefulWidget {
 }
 
 class _EditPageState extends State<EditPage> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController usernameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final usernameController = TextEditingController();
 
   XFile? _image;
   bool _isNewImage = false;
@@ -64,15 +64,18 @@ class _EditPageState extends State<EditPage> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings(context.watch<LanguageCubit>().isArabic);
+    final isArabic = context.watch<LanguageCubit>().isArabic;
+    final theme = Theme.of(context);
+
     return MultiBlocListener(
       listeners: [
-        /// 🔵 UPDATE PHOTO LISTENER
         BlocListener<UpdatePhotoCubit, UpdatePhotoState>(
           listener: (context, state) {
             if (state.isLoading) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Uploading photo...")),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(strings.uploadingPhoto)));
             } else if (state.successMessage != null) {
               ScaffoldMessenger.of(
                 context,
@@ -84,58 +87,65 @@ class _EditPageState extends State<EditPage> {
             }
           },
         ),
-
-        /// 🔴 DELETE PHOTO LISTENER
         BlocListener<DeletePhotoCubit, DeletePhotoState>(
           listener: (context, state) async {
             if (state.isLoading) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Deleting photo...")),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(strings.deletingPhoto)));
             } else if (state.successMessage != null) {
               setState(() {
                 _image = null;
                 networkImageUrl = null;
               });
-
               await _secureStorage.delete(key: 'image');
-
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(SnackBar(content: Text(state.successMessage!)));
-            } else if (state.errorMessage != null) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
             }
           },
         ),
       ],
-
       child: Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: AppColor.colorapp,
-          leading: IconButton(
-            icon: Iconarrowleft.arowleft,
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const HomePage()),
-                (route) => false,
-              );
-            },
-          ),
-          title: const Text(
-            "Edit Profile",
-            style: TextStyle(
-              fontFamily: 'Gabarito',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF234E9D),
+        backgroundColor: theme.scaffoldBackgroundColor,
+
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Directionality(
+            textDirection: isArabic ? TextDirection.ltr : TextDirection.rtl,
+            child: AppBar(
+              backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+              elevation: 0,
+
+              // ❌ نمنع Flutter من التحكم بالـ leading
+              automaticallyImplyLeading: false,
+
+              // ✅ نثبت الأيقونة في اليسار دائمًا
+              actions: [
+                Directionality(
+                  textDirection: TextDirection.ltr, // يمنع الانعكاس
+                  child: IconButton(
+                    icon:
+                        isArabic
+                            ? Iconarowright.arrow(context) // → عربي
+                            : Iconarrowleft.arrow(context), // ← إنجليزي
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const HomePage()),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                ),
+              ],
+              title: Text(
+                strings.editProfile,
+                style: theme.appBarTheme.titleTextStyle,
+              ),
+              centerTitle: true,
             ),
           ),
-          centerTitle: true,
         ),
 
         body: SingleChildScrollView(
@@ -145,49 +155,36 @@ class _EditPageState extends State<EditPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(child: _buildProfileSection()),
-
-                const Text(
-                  "Display Name",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                Center(child: _buildProfileSection(context, strings)),
+                Text(strings.displayName, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 5),
                 buildTextFieldEdit(
                   usernameController,
-                  "User Name",
+                  strings.userName,
                   Icons.person,
                 ),
-
                 const SizedBox(height: 10),
-                const Text(
-                  "Email",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                Text(strings.email, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 5),
                 buildTextFieldEdit(
                   emailController,
-                  "Email (Optional)",
+                  strings.emailOptional,
                   Icons.email,
                 ),
-
                 const SizedBox(height: 10),
-                const Text(
-                  "Phone Number",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
+                Text(strings.phoneNumber, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 5),
                 buildTextFieldEdit(
                   phoneController,
-                  "Phone Number",
+                  strings.phoneNumber,
                   Icons.phone,
                 ),
-
                 const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.only(left: 40.0),
                   child: buildButtonProfilewithonpressed(
-                    'Save Edit',
-                    () => _saveChanges(context),
+                    strings.saveEdit,
+                    () => _saveChanges(context, strings),
                   ),
                 ),
               ],
@@ -198,14 +195,14 @@ class _EditPageState extends State<EditPage> {
     );
   }
 
-  Widget _buildProfileSection() {
-    ImageProvider imageProvider;
+  // ================= PROFILE =================
+  Widget _buildProfileSection(BuildContext context, AppStrings strings) {
+    final theme = Theme.of(context);
 
+    ImageProvider imageProvider;
     if (_image != null) {
       imageProvider =
-          kIsWeb
-              ? NetworkImage(_image!.path)
-              : FileImage(File(_image!.path)) as ImageProvider;
+          kIsWeb ? NetworkImage(_image!.path) : FileImage(File(_image!.path));
     } else if (networkImageUrl != null) {
       imageProvider = NetworkImage(networkImageUrl!);
     } else {
@@ -218,52 +215,34 @@ class _EditPageState extends State<EditPage> {
           alignment: Alignment.center,
           children: [
             CircleAvatar(
-              backgroundColor: const Color.fromARGB(255, 199, 228, 255),
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
               radius: 50,
               backgroundImage: imageProvider,
             ),
-
-            /// ONLY CAMERA ICON IS CLICKABLE
-            Positioned(
-              child: InkWell(
-                onTap: () async {
-                  await _pickImage();
-                },
-                child: SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: Image.asset(
-                    'assets/icons/camera-01.png',
-                    color: Colors.white,
-                  ),
-                ),
+            InkWell(
+              onTap: _pickImage,
+              child: Image.asset(
+                'assets/icons/camera-01.png',
+                width: 30,
+                height: 30,
+                color: Colors.white,
               ),
             ),
           ],
         ),
-
         const SizedBox(height: 10),
-        const Text(
-          "select your photo",
-          style: TextStyle(color: Colors.grey, fontSize: 14),
-        ),
+        Text(strings.selectPhoto, style: theme.textTheme.bodySmall),
         const SizedBox(height: 10),
-
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red, size: 28),
-              onPressed: () {
-                context.read<DeletePhotoCubit>().deletePhoto();
-              },
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => context.read<DeletePhotoCubit>().deletePhoto(),
             ),
-
-            const SizedBox(width: 10),
-            const Icon(Icons.horizontal_rule, size: 28),
-
+            const Icon(Icons.horizontal_rule),
             IconButton(
-              icon: const Icon(Icons.edit, color: Colors.blue, size: 28),
+              icon: const Icon(Icons.edit, color: Colors.blue),
               onPressed: () async {
                 if (_image != null) {
                   await context.read<UpdatePhotoCubit>().updatePhoto(
@@ -271,7 +250,7 @@ class _EditPageState extends State<EditPage> {
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Select image first!")),
+                    SnackBar(content: Text(strings.selectImageFirst)),
                   );
                 }
               },
@@ -284,8 +263,7 @@ class _EditPageState extends State<EditPage> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
+    final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
         _image = image;
@@ -294,7 +272,7 @@ class _EditPageState extends State<EditPage> {
     }
   }
 
-  Future<void> _saveChanges(BuildContext context) async {
+  Future<void> _saveChanges(BuildContext context, AppStrings strings) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     await _secureStorage.write(key: 'username', value: usernameController.text);
@@ -304,9 +282,9 @@ class _EditPageState extends State<EditPage> {
     if (_isNewImage && _image != null) {
       await context.read<UpdatePhotoCubit>().updatePhoto(File(_image!.path));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Profile updated successfully!")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.profileUpdated)));
     }
   }
 }

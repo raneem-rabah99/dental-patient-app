@@ -17,6 +17,7 @@ class DoctorCubit extends Cubit<DoctorState> {
 
     try {
       final list = await service.fetchDoctors();
+      if (isClosed) return;
       _allDoctors = list;
       emit(state.copyWith(isLoading: false, doctors: list, error: null));
     } catch (e) {

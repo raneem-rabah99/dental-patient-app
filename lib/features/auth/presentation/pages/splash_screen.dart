@@ -1,8 +1,9 @@
 import 'package:dentaltreatment/features/auth/presentation/pages/login_page.dart';
+import 'package:dentaltreatment/features/home/presentation/pages/home_page.dart';
 import 'package:dentaltreatment/core/classes/icons_classes.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
-import 'package:dentaltreatment/features/home/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,15 +13,28 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
-    });
+    _checkLogin();
+  }
+
+  Future<void> _checkLogin() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    final token = await _storage.read(key: 'token');
+
+    if (!mounted) return;
+
+    if (token != null && token.isNotEmpty) {
+      // ✅ Logged in
+      Navigator.pushReplacementNamed(context, "/home");
+    } else {
+      // ❌ Not logged in
+      Navigator.pushReplacementNamed(context, "/login");
+    }
   }
 
   @override
@@ -37,7 +51,19 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [Iconsteeth.teeth],
+            children: [
+              Iconsteeth.teeth,
+              const SizedBox(height: 12),
+              const Text(
+                'ByteDent',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
           ),
         ),
       ),

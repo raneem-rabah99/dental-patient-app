@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dentaltreatment/core/theme/app_color.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 // Optional: Uncomment if you're getting the token from storage
@@ -72,7 +73,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
       body:
           isLoading
-              ? Center(child: CircularProgressIndicator())
+              ? Center(
+                child: CircularProgressIndicator(color: AppColor.darkblue),
+              )
               : notifications.isEmpty
               ? Center(child: Text('No notifications'))
               : ListView.builder(

@@ -9,6 +9,8 @@ import 'package:dentaltreatment/features/auth/presentation/widgets/validator.dar
 import 'package:dentaltreatment/core/classes/icons_classes.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
 import 'package:dentaltreatment/features/home/presentation/pages/home_page.dart';
+import 'package:dentaltreatment/features/home/presentation/managers/language_cubit.dart';
+import 'package:dentaltreatment/core/localization/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -17,16 +19,15 @@ class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController passwordController = TextEditingController();
-
   final _formKey = GlobalKey<FormState>();
-
   final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+
+    final strings = AppStrings(context.watch<LanguageCubit>().isArabic);
 
     return BlocProvider(
       create: (_) => LoginCubit(LoginService()),
@@ -36,15 +37,15 @@ class LoginPage extends StatelessWidget {
             if (state.isLoading) {
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('Logging in...')));
+              ).showSnackBar(SnackBar(content: Text(strings.loggingIn)));
             } else if (state.successMessage != null) {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(SnackBar(content: Text(state.successMessage!)));
 
-              // ✅ Save token + username securely
               final cubit = context.read<LoginCubit>();
               final data = cubit.lastUserData;
+
               if (data != null) {
                 await secureStorage.write(
                   key: 'token',
@@ -60,7 +61,6 @@ class LoginPage extends StatelessWidget {
                 );
               }
 
-              // ✅ Navigate to HomePage
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (_) => const HomePage()),
@@ -84,6 +84,7 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 Positioned(
                   top: height * 0.30,
                   left: 0,
@@ -106,26 +107,31 @@ class LoginPage extends StatelessWidget {
                         key: _formKey,
                         child: Column(
                           children: [
-                            const Text(
-                              "Welcome, Use Your Email To Sign On",
+                            Text(
+                              strings.welcomeLogin,
                               textAlign: TextAlign.center,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 13,
                                 color: Color.fromARGB(255, 57, 57, 57),
                                 fontFamily: 'Serif',
                               ),
                             ),
+
                             const SizedBox(height: 14),
+
                             buildTextField(
                               emailController,
-                              "Example@email.com",
+                              strings.emailHint,
                               IconMail.iconmail,
                               validator: Validators.validateEmail,
                             ),
+
                             const SizedBox(height: 15),
+
                             PasswordInput(controller: passwordController),
 
                             const SizedBox(height: 70),
+
                             GestureDetector(
                               onTap:
                                   state.isLoading
@@ -150,7 +156,9 @@ class LoginPage extends StatelessWidget {
                                 ),
                                 alignment: Alignment.center,
                                 child: Text(
-                                  state.isLoading ? "Logging in..." : "Confirm",
+                                  state.isLoading
+                                      ? strings.loggingIn
+                                      : strings.confirm,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -161,18 +169,21 @@ class LoginPage extends StatelessWidget {
                             ),
 
                             const SizedBox(height: 40),
-                            const Padding(
-                              padding: EdgeInsets.only(right: 140.0),
+
+                            Padding(
+                              padding: const EdgeInsets.only(right: 140.0),
                               child: Text(
-                                "Don't have an account?",
-                                style: TextStyle(
+                                strings.noAccount,
+                                style: const TextStyle(
                                   color: Colors.black,
                                   fontSize: 14,
                                   fontFamily: 'Serif',
                                 ),
                               ),
                             ),
+
                             const SizedBox(height: 10),
+
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xffF1F1F1),
@@ -193,14 +204,15 @@ class LoginPage extends StatelessWidget {
                                   ),
                                 );
                               },
-                              child: const Text(
-                                "Sign up",
-                                style: TextStyle(
+                              child: Text(
+                                strings.signUp,
+                                style: const TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
+
                             const SizedBox(height: 10),
                           ],
                         ),
@@ -208,10 +220,11 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 SafeArea(
                   child: Column(
                     children: [
-                      const SizedBox(height: 70),
+                      const SizedBox(height: 50),
                       Center(child: Iconsteeth.teeth),
                     ],
                   ),

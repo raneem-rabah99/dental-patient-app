@@ -1,3 +1,4 @@
+import 'package:dentaltreatment/core/theme/app_color.dart';
 import 'package:flutter/material.dart';
 
 class Iconstooth {
@@ -6,22 +7,29 @@ class Iconstooth {
 
 class Iconsteeth {
   static Image teeth = Image.asset(
-    'assets/icons/care (1).png',
-    width: 150,
-    height: 150,
+    'assets/icons/logosenior.png',
+    width: 170,
+    height: 170,
+    color: Colors.white,
   );
 }
 
 class IconKey {
   static Image iconkey = Image.asset(
     'assets/icons/IconKey.png',
+    color: AppColor.darkblue,
     width: 24,
     height: 24,
   );
 }
 
 class Iconeye {
-  static Image eye = Image.asset('assets/icons/eye.png', width: 24, height: 24);
+  static Image eye = Image.asset(
+    'assets/icons/eye.png',
+    width: 24,
+    height: 24,
+    color: AppColor.darkblue,
+  );
 }
 
 class Icondental {
@@ -43,29 +51,40 @@ class Iconupload {
 class IconMail {
   static Image iconmail = Image.asset(
     'assets/icons/mail-01.png',
+    color: AppColor.darkblue,
     width: 24,
     height: 24,
   );
 }
 
+class Iconarrowleft {
+  static Widget arrow(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Image.asset(
+      'assets/icons/left-arrow.png',
+      width: 20,
+      height: 20,
+      color: isDark ? Colors.white : Colors.black,
+    );
+  }
+}
+
 class Iconarowright {
-  static Image arowright = Image.asset(
-    'assets/icons/right-arrow.png',
-    width: 12,
-    height: 12,
-  );
+  static Widget arrow(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Image.asset(
+      'assets/icons/right-arrow.png',
+      width: 20,
+      height: 20,
+      color: isDark ? Colors.white : Colors.black,
+    );
+  }
 }
 
 class Iconarowdel {
   static Image del = Image.asset('assets/icons/del.png', width: 35, height: 35);
-}
-
-class Iconarrowleft {
-  static Image arowleft = Image.asset(
-    'assets/icons/left-arrow.png',
-    width: 20,
-    height: 20,
-  );
 }
 
 class IconCamera {
@@ -139,7 +158,12 @@ class Iconecelender {
 
 class IconDown {
   static Widget chevronDown = Center(
-    child: Image.asset('assets/icons/chevron-down.png', width: 30, height: 30),
+    child: Image.asset(
+      'assets/icons/chevron-down.png',
+      width: 30,
+      height: 30,
+      color: AppColor.darkblue,
+    ),
   );
 }
 
@@ -156,5 +180,6 @@ class IconePerson {
     'assets/icons/user.png',
     width: 24,
     height: 24,
+    color: AppColor.darkblue,
   );
 }

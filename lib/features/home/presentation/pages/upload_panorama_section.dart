@@ -1,10 +1,17 @@
-import 'package:dentaltreatment/core/classes/icons_classes.dart';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
+import 'package:dentaltreatment/core/classes/icons_classes.dart';
+import 'package:dentaltreatment/core/localization/app_strings.dart';
+import 'package:dentaltreatment/features/home/presentation/managers/language_cubit.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 class UploadPanoramaSection extends StatefulWidget {
-  const UploadPanoramaSection({super.key});
+  /// 🔹 Callback to send selected image to parent (AiPage)
+  final Function(File image) onImageSelected;
+
+  const UploadPanoramaSection({super.key, required this.onImageSelected});
 
   @override
   State<UploadPanoramaSection> createState() => _UploadPanoramaSectionState();
@@ -15,18 +22,26 @@ class _UploadPanoramaSectionState extends State<UploadPanoramaSection> {
 
   Future<void> _pickFile() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
 
     if (pickedFile != null) {
       setState(() {
         _file = pickedFile;
       });
-      print('Picked file: ${pickedFile.path}');
+
+      /// ✅ SEND IMAGE TO AIPAGE
+      widget.onImageSelected(File(pickedFile.path));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = context.watch<LanguageCubit>().isArabic;
+    final strings = AppStrings(isArabic);
+
     return Column(
       children: [
         const SizedBox(height: 3),
@@ -34,11 +49,6 @@ class _UploadPanoramaSectionState extends State<UploadPanoramaSection> {
           width: 360,
           height: 300,
           decoration: BoxDecoration(
-            /*image: const DecorationImage(
-              image: AssetImage('assets/images/transparent_bg.png'),
-              fit: BoxFit.cover,
-              opacity: 0.3,
-            ),*/
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.blueAccent.withOpacity(0.4)),
             boxShadow: [
@@ -64,7 +74,7 @@ class _UploadPanoramaSectionState extends State<UploadPanoramaSection> {
                   Iconupload.dental,
                   const SizedBox(height: 8),
                   Text(
-                    'Upload Panorama',
+                    strings.uploadPanorama,
                     style: TextStyle(
                       color: Colors.blueGrey.shade700,
                       fontWeight: FontWeight.w600,
@@ -73,11 +83,10 @@ class _UploadPanoramaSectionState extends State<UploadPanoramaSection> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Choose File',
+                    strings.chooseFile,
                     style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
                   ),
                 ] else ...[
-                  // Show preview or file name after upload
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.file(

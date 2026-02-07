@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dentaltreatment/core/theme/app_assets.dart';
 import 'package:dentaltreatment/features/home/data/models/favorite_case_model.dart';
 import 'package:dentaltreatment/features/home/presentation/pages/doctor_card.dart';
+import 'package:dentaltreatment/features/home/presentation/pages/doctor_details_page.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -62,6 +63,30 @@ class BeforeAfterItem extends StatelessWidget {
                   doctorName:
                       "${caseItem.firstName ?? ''} ${caseItem.lastName ?? ''}",
                   rating: caseItem.averageRate ?? 0.0,
+
+                  // ***************************************
+                  //          NEW NAVIGATION LOGIC
+                  // ***************************************
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (_) => DoctorDetailsPage(
+                              doctor: {
+                                "name":
+                                    "${caseItem.firstName ?? ''} ${caseItem.lastName ?? ''}",
+                                "image": buildImageUrl(caseItem.photoBefore),
+                                "location": caseItem.location ?? "Unknown",
+                                "specialization":
+                                    caseItem.specialization ?? "Dental",
+                                "distance": caseItem.distance ?? "2 km",
+                                "time": caseItem.availableTime ?? "9 AM - 5 PM",
+                              },
+                            ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

@@ -1,4 +1,5 @@
 import 'package:dentaltreatment/core/classes/icons_classes.dart';
+import 'package:dentaltreatment/core/theme/app_color.dart';
 import 'package:flutter/material.dart';
 
 class PasswordInput extends StatefulWidget {
@@ -22,28 +23,45 @@ class _PasswordInputState extends State<PasswordInput> {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: widget.controller,
-      obscureText: !isPasswordVisible,
-      validator: widget.validator,
-      decoration: InputDecoration(
-        prefixIcon: IconKey.iconkey,
-        suffixIcon: IconButton(
-          icon: Iconeye.eye,
-          onPressed: () {
-            setState(() {
-              isPasswordVisible = !isPasswordVisible;
-            });
-          },
+    final bool desktop = MediaQuery.of(context).size.width >= 900;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: desktop ? 420 : double.infinity, // ✅ FIX
         ),
-        hintText: widget.hintText,
-        hintStyle: TextStyle(
-          color: Color.fromARGB(255, 77, 77, 77),
-          fontSize: 10,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Color.fromARGB(255, 77, 77, 77)),
+        child: TextFormField(
+          style: const TextStyle(
+            color: Colors.black, // أو Colors.white حسب الخلفية
+            fontSize: 14,
+          ),
+          controller: widget.controller,
+          obscureText: !isPasswordVisible,
+          validator: widget.validator,
+          decoration: InputDecoration(
+            prefixIcon: IconKey.iconkey,
+            suffixIcon: IconButton(
+              icon: Iconeye.eye,
+              onPressed: () {
+                setState(() {
+                  isPasswordVisible = !isPasswordVisible;
+                });
+              },
+            ),
+            hintText: widget.hintText,
+            hintStyle: const TextStyle(
+              color: Color.fromARGB(255, 77, 77, 77),
+              fontSize: 10,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppColor.darkblue),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: AppColor.darkblue, width: 2),
+            ),
+          ),
         ),
       ),
     );

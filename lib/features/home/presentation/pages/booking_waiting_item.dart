@@ -1,24 +1,22 @@
-import 'package:dentaltreatment/core/classes/icons_classes.dart';
+import 'dart:io';
 import 'package:dentaltreatment/core/theme/app_assets.dart';
 import 'package:dentaltreatment/core/theme/app_color.dart';
-import 'package:dentaltreatment/features/home/data/models/booking_card_model.dart';
-import 'package:dentaltreatment/features/home/presentation/managers/booking%20_card_cubit.dart';
+import 'package:dentaltreatment/features/home/data/models/booking_status_model.dart';
+import 'package:dentaltreatment/features/home/presentation/managers/booking_status_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class BookingwaittingItem extends StatefulWidget {
-  final BookingCardModel bookingWaitting;
+class BookingWaitingItem extends StatefulWidget {
+  final BookingStatusModel booking;
 
-  const BookingwaittingItem({Key? key, required this.bookingWaitting})
-    : super(key: key);
+  const BookingWaitingItem({Key? key, required this.booking}) : super(key: key);
 
   @override
-  _BookingwaittingItemState createState() => _BookingwaittingItemState();
+  State<BookingWaitingItem> createState() => _BookingWaitingItemState();
 }
 
-class _BookingwaittingItemState extends State<BookingwaittingItem> {
+class _BookingWaitingItemState extends State<BookingWaitingItem> {
   final FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   String? imagePath;
 
@@ -30,17 +28,13 @@ class _BookingwaittingItemState extends State<BookingwaittingItem> {
 
   Future<void> _loadUserImage() async {
     String? storedImagePath = await _secureStorage.read(key: 'image');
-    setState(() {
-      imagePath = storedImagePath;
-    });
-    print("Retrieved Today's Booking Image Path: $imagePath");
+    setState(() => imagePath = storedImagePath);
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 800,
-      margin: const EdgeInsets.only(right: 10),
+      width: 600,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -54,6 +48,7 @@ class _BookingwaittingItemState extends State<BookingwaittingItem> {
       ),
       child: Stack(
         children: [
+          // Blue side strip
           Positioned(
             left: 0,
             top: 0,
@@ -69,130 +64,109 @@ class _BookingwaittingItemState extends State<BookingwaittingItem> {
               ),
             ),
           ),
+
+          // Content
           Padding(
-            padding: const EdgeInsets.only(left: 22, right: 10, bottom: 8),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header with avatar + doctor name
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     CircleAvatar(
                       radius: 24,
                       backgroundImage:
-                          imagePath != null && File(imagePath!).existsSync()
+                          (imagePath != null && File(imagePath!).existsSync())
                               ? FileImage(File(imagePath!))
                               : AssetImage(AppAssets.user) as ImageProvider,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.bookingWaitting.userName,
+                          widget.booking.doctorName,
                           style: const TextStyle(
-                            fontFamily: 'Serif',
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                            color: Colors.black,
                           ),
                         ),
-                        Row(
-                          children: [
-                            Iconlocation.location,
-                            const SizedBox(width: 5),
-                            Text(
-                              widget.bookingWaitting.location,
-                              style: const TextStyle(
-                                fontFamily: 'Serif',
-                                fontSize: 12,
-                                color: Colors.black,
-                                decoration: TextDecoration.underline,
-                                decorationThickness: 2.0,
-                                decorationStyle: TextDecorationStyle.solid,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    Spacer(),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          children: [
-                            PopupMenuButton<String>(
-                              onSelected: (String result) {
-                                if (result == 'edit') {
-                                  print("Edit clicked");
-                                } else if (result == 'delete') {
-                                  print("Delete clicked");
-                                  context
-                                      .read<BookingCardCubit>()
-                                      .deleteBooking(widget.bookingWaitting);
-                                }
-                              },
-                              itemBuilder: (BuildContext context) {
-                                return [
-                                  PopupMenuItem<String>(
-                                    value: 'edit',
-                                    child: ListTile(
-                                      leading: Iconedit.edit,
-                                      title: Text('Edit'),
-                                    ),
-                                  ),
-                                  PopupMenuItem<String>(
-                                    value: 'delete',
-                                    child: ListTile(
-                                      leading: Iconedelete.delete,
 
-                                      title: Text('Delete'),
-                                    ),
-                                  ),
-                                ];
-                              },
-                              icon: const Icon(
-                                Icons.more_horiz,
-                                size: 24,
-                                color: Color(0xffD2D2D2),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 13,
+                              color: Colors.black,
+                            ),
+                            SizedBox(width: 5),
+                            SizedBox(
+                              width: 180,
+                              child: Text(
+                                widget.booking.doctorAddress,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 4),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+
+                SizedBox(height: 8),
+
+                // Date & time
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Iconecelender.celender,
-                    const SizedBox(width: 5),
+                    Icon(Icons.calendar_today, size: 14, color: Colors.black),
+                    SizedBox(width: 5),
                     Text(
-                      "From: ${widget.bookingWaitting.date}",
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontSize: 10,
-                        color: Colors.black,
-                      ),
+                      "From: ${widget.booking.date}",
+                      style: TextStyle(color: Colors.black),
                     ),
-                    const SizedBox(width: 10),
-                    Iconclock.clock,
-                    const SizedBox(width: 5),
+                    SizedBox(width: 10),
+                    Icon(Icons.access_time, size: 14, color: Colors.black),
+                    SizedBox(width: 5),
                     Text(
-                      "At: ${widget.bookingWaitting.time}",
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontSize: 10,
-                        color: Colors.black,
-                      ),
+                      "At: ${widget.booking.time}",
+                      style: TextStyle(color: Colors.black),
                     ),
-                    const SizedBox(width: 10),
                   ],
                 ),
-                const SizedBox(height: 10),
+
+                // Delete button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        context.read<BookingStatusCubit>().deleteBooking(
+                          widget.booking.id,
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: Color(0xffE3E3E3)),
+                        ),
+                      ),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontFamily: 'Serif',
+                          color: Color(0xff666666),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

@@ -24,7 +24,7 @@ class UpdatePhotoCubit extends Cubit<UpdatePhotoState> {
 
     if (response.status == true && response.photoUrl != null) {
       await _storage.write(key: 'image', value: response.photoUrl);
-
+      if (isClosed) return;
       emit(state.copyWith(isLoading: false, successMessage: response.message));
     } else {
       emit(state.copyWith(isLoading: false, errorMessage: response.message));
